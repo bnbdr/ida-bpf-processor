@@ -1,0 +1,176 @@
+//--------------------------------------
+//--- 010 Editor v6.0.1 Binary Template
+//
+// File: bpf.bt
+// Author: bdr00
+// Purpose: parsing bpf bytecode in the bpf_loader format
+//--------------------------------------
+
+struct _bpfi;
+
+typedef struct _bpfi {
+    WORD code<bgcolor=0xaaaaaa, format=hex>;
+    BYTE jt;
+    BYTE jf;
+    DWORD k<bgcolor=0x222222, fgcolor=0xa0a0a0>;
+} bpf_inst<read=read_instr, open=false>;
+
+int BPF_MODE( bpf_inst& i )
+{
+    return (i.code) & 0xe0;
+}        
+int BPF_SIZE( bpf_inst& i )
+{
+    return (i.code) & 0x18;
+}         
+int BPF_OP( bpf_inst& i )
+{
+    return (i.code) & 0xf0;
+}
+int BPF_MISCOP( bpf_inst& i )
+{
+    return (i.code) & 0xf8;
+}
+int BPF_RVAL( bpf_inst& i )
+{
+    return (i.code) & 0x18;
+}
+int BPF_SRC( bpf_inst& i )
+{
+    return (i.code) & 0x08;
+}
+int BPF_CLASS( bpf_inst& i )
+{
+    return  (i.code) & 0x07;
+}
+
+local int i;
+
+string get_oprnd_for_mode(bpf_inst& i, int m)
+{
+    local string s;
+    switch (m)
+    {
+        case 0x00: // imm
+            SPrintf(s, "%Xh", i.k);
+        break;
+        case 0x20: // abs
+            SPrintf(s, "[%Xh]", i.k);
+        break;
+        case 0x40: // ind
+            SPrintf(s, "[@X+%Xh]", i.k);
+        break;
+        case 0x60: // mem
+            SPrintf(s, "M[%Xh]", i.k);
+        break;
+        case 0x80: // len
+            s = "@len";
+        break;
+        case 0xa0: // msh
+            SPrintf(s, "4*([%Xh]&%Xh)", i.k, 0x0f);
+        break;
+    }
+
+    return s;
+}
+
+string read_instr(bpf_inst& i)
+{
+    string s;
+    switch (BPF_CLASS(i))
+    {
+        case 0x00: // ld
+            local string op;
+            local string oprnd;
+            switch(BPF_SIZE(i))
+            {               
+                case 0x00: op = "ld"; break;                 
+                case 0x08: op = "ldh"; break;
+                case 0x10: op = "ldb"; break;
+            }
+            oprnd = get_oprnd_for_mode(i, BPF_MODE(i));
+            SPrintf(s, "%s %s", op, oprnd);
+        break;
+        case 0x01: // ldx
+            local string oprnd = get_oprnd_for_mode(i, BPF_MODE(i));
+            SPrintf(s, "ldx %s", oprnd);           
+        break;
+        case 0x02: SPrintf(s, "st @M[%Xh]", i.k); break; // st
+        case 0x03: SPrintf(s, "stx @M[%Xh]", i.k); break; // stx
+        case 0x04: // alu
+            local string op;
+            switch(BPF_OP(i))
+            {               
+                case 0x00: op = "add"; break;
+                case 0x10: op = "sub"; break;
+                case 0x20: op = "mul"; break;
+                case 0x30: op = "div"; break;
+                case 0x40: op = "or"; break;
+                case 0x50: op = "and"; break;
+                case 0x60: op = "lsh"; break;
+                case 0x70: op = "rsh"; break;
+                case 0x80: op = "neg"; break;
+            }
+
+            switch(BPF_SRC(i))
+            {
+                // ret #k
+                case 0x00: SPrintf( s, "%s %Xh", op, i.k); break;
+                // ret x
+                case 0x10: SPrintf( s, "%s @A", op); break;
+            }
+        break;
+        case 0x05: // branch
+
+            switch(BPF_OP(i))
+            {               
+                case 0x00: SPrintf( s, "jmp %Xh", i.k); break;
+                case 0x10: SPrintf( s, "jeq %Xh, %d, %d", i.k, i.jt, i.jf); break;
+                case 0x20: SPrintf( s, "jgt %Xh, %d, %d", i.k, i.jt, i.jf); break;
+                case 0x30: SPrintf( s, "jge %Xh, %d, %d", i.k, i.jt, i.jf); break;
+                case 0x40: SPrintf( s, "jset %Xh, %d, %d", i.k, i.jt, i.jf); break;                  
+            }
+            
+
+        break;
+        case 0x06: // ret
+            switch(BPF_RVAL(i))
+            {
+                // ret #k
+                case 0x00: SPrintf( s, "ret %Xh", i.k); break;
+                // ret a
+                case 0x10: s = "ret @A"; break;
+            }
+        break;
+
+        
+        case 0x07: // misc
+            switch(BPF_MISCOP(i))
+            {
+                case 0x00: s = "tax"; break;
+                case 0x80: s = "txa"; break;
+            } 
+        break;
+        default: return "~unknown~";
+    }
+    return s;
+}
+typedef struct{
+    DWORD magic;
+    DWORD reserved1;
+ 
+} bpf_file_hdr<read=readHDR>;
+
+string readHDR( bpf_file_hdr& hdr)
+{
+    return "bpf";
+}
+
+local int instr_count = (FileSize()-sizeof( bpf_file_hdr))/sizeof(bpf_inst);
+
+bpf_file_hdr hdr<name="bpf_hdr">;
+Assert(hdr.magic == 0x00667062, "no bpf magic" );
+for (i =0; i< instr_count; ++i)
+{
+    bpf_inst bc<name="instruction">;
+}
