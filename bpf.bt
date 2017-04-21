@@ -61,7 +61,7 @@ string get_oprnd_for_mode(bpf_inst& i, int m)
             SPrintf(s, "[@X+%Xh]", i.k);
         break;
         case 0x60: // mem
-            SPrintf(s, "M[%Xh]", i.k);
+            SPrintf(s, "@M[%Xh]", i.k);
         break;
         case 0x80: // len
             s = "@len";
@@ -114,10 +114,10 @@ string read_instr(bpf_inst& i)
 
             switch(BPF_SRC(i))
             {
-                // ret #k
+                // using #k
                 case 0x00: SPrintf( s, "%s %Xh", op, i.k); break;
-                // ret x
-                case 0x10: SPrintf( s, "%s @A", op); break;
+                // using x
+                case 0x08: SPrintf( s, "%s @X", op); break;
             }
         break;
         case 0x05: // branch
