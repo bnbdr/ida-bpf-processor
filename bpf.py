@@ -374,7 +374,7 @@ class BpfProc(BpfProcessorBase):
     
     def decode_ld(self, bi, cmd):
         c = bi.code
-        isldx = c._class is BPF_CLASS.BPF_LDX
+        isldx = c._class == BPF_CLASS.BPF_LDX
         if isldx:
             cmd.itype = self.inames['ldx']
         else:
@@ -385,13 +385,13 @@ class BpfProc(BpfProcessorBase):
             }[c._size]]
         if not isldx:
                 
-            if c._mode is BPF_MODE.BPF_ABS:
+            if c._mode == BPF_MODE.BPF_ABS:
                 cmd[0].type = o_mem            
                 cmd[0].dtyp = dt_dword
                 cmd[0].addr = bi.k
                 return 1
 
-            if c._mode is BPF_MODE.BPF_IND:
+            if c._mode == BPF_MODE.BPF_IND:
                 cmd[0].type = o_displ            
                 cmd[0].dtyp = dt_dword
                 cmd[0].value = SIGNEXT(bi.k,32)
@@ -399,26 +399,26 @@ class BpfProc(BpfProcessorBase):
                 return 1
         
         else:
-            if c._mode is BPF_MODE.BPF_MSH:
+            if c._mode == BPF_MODE.BPF_MSH:
                 cmd[0].type = o_phrase           
                 cmd[0].dtyp = dt_dword
                 cmd[0].value = SIGNEXT(bi.k,32)
                 return 1
         
-        if isldx or (not isldx and c._size  is BPF_SIZE.BPF_W):
-            if c._mode is BPF_MODE.BPF_IMM:
+        if isldx or (not isldx and c._size == BPF_SIZE.BPF_W):
+            if c._mode == BPF_MODE.BPF_IMM:
                 cmd[0].type = o_imm            
                 cmd[0].dtyp = dt_dword
                 cmd[0].value = bi.k
                 return 1
 
-            if c._mode is BPF_MODE.BPF_LEN:
+            if c._mode == BPF_MODE.BPF_LEN:
                 cmd[0].type = o_reg            
                 cmd[0].dtyp = dt_dword
                 cmd[0].reg = self.regNames.index('len')
                 return 1
 
-            if c._mode is BPF_MODE.BPF_MEM:
+            if c._mode == BPF_MODE.BPF_MEM:
                 cmd[0].type = o_mem            
                 cmd[0].dtyp = dt_dword
                 cmd[0].addr = bi.k
@@ -427,13 +427,13 @@ class BpfProc(BpfProcessorBase):
 
     def decode_ret(self, bi, cmd):
         cmd.itype = self.inames['ret']
-        if bi.code._rval is BPF_RVAL.BPF_K:
+        if bi.code._rval == BPF_RVAL.BPF_K:
             cmd[0].type = o_imm            
             cmd[0].dtyp = dt_dword
             cmd[0].value = bi.k
             cmd[0].specval |= BpfProc.FORCE_ENUM
             # todo: defined values for seccomp?
-        elif bi.code._rval is BPF_RVAL.BPF_A:
+        elif bi.code._rval == BPF_RVAL.BPF_A:
             cmd[0].type = o_reg            
             cmd[0].dtyp = dt_dword
             cmd[0].reg = self.regNames.index('A')
@@ -453,7 +453,7 @@ class BpfProc(BpfProcessorBase):
             BPF_OP.BPF_JSET:'jset'
         }[c._op]]
 
-        if c._op is BPF_OP.BPF_JA: 
+        if c._op == BPF_OP.BPF_JA: 
             cmd[0].type = o_near            
             cmd[0].dtyp = dt_dword
             cmd[0].addr = curr_off + bi.k* BPF_INST_SIZE
@@ -462,7 +462,7 @@ class BpfProc(BpfProcessorBase):
         immi = 0
         jti = 1
         jfi = 2
-        if bi.jt == 0: # if the true offset is 0, then use fake negative compares so arrows would be parsed correctly
+        if bi.jt == 0: # if the true offset == 0, then use fake negative compares so arrows would be parsed correctly
             jfi = 1
             jti = 2
 
@@ -546,12 +546,12 @@ class BpfProc(BpfProcessorBase):
             BPF_OP.BPF_RSH:'rsh',
             BPF_OP.BPF_NEG:'neg'
         }[c._op]]
-        if bi.code._src is BPF_RVAL.BPF_K:
+        if bi.code._src == BPF_RVAL.BPF_K:
             cmd[0].type = o_imm            
             cmd[0].dtyp = dt_dword
             cmd[0].value = SIGNEXT(bi.k, 32)
         
-        if bi.code._src is BPF_RVAL.BPF_X:
+        if bi.code._src == BPF_RVAL.BPF_X:
             cmd[0].type = o_reg            
             cmd[0].dtyp = dt_dword
             cmd[0].reg = self.regNames.index('x')
@@ -577,22 +577,22 @@ class BpfProc(BpfProcessorBase):
         #     c._miscop 
         # )
         op_count = 0
-        if c._class is BPF_CLASS.BPF_MISC:
+        if c._class == BPF_CLASS.BPF_MISC:
             op_count = self.decode_misc(bi, cmd)
             
-        if c._class is BPF_CLASS.BPF_RET:
+        if c._class == BPF_CLASS.BPF_RET:
             op_count = self.decode_ret(bi, cmd)
 
         elif c._class in [BPF_CLASS.BPF_LD, BPF_CLASS.BPF_LDX]:
             op_count = self.decode_ld(bi, cmd)
             
-        elif c._class is BPF_CLASS.BPF_JMP:
+        elif c._class == BPF_CLASS.BPF_JMP:
             op_count = self.decode_jmp(bi, cmd)
 
         elif c._class in [BPF_CLASS.BPF_ST, BPF_CLASS.BPF_STX]:
             op_count = self.decode_store(bi, cmd)
         
-        elif c._class is BPF_CLASS.BPF_ALU:
+        elif c._class == BPF_CLASS.BPF_ALU:
             op_count = self.decode_alu(bi, cmd)
             
         cmd[op_count].dtyp = o_void # so that 'out' method would know when to stop
