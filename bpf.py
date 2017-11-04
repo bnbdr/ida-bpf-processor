@@ -80,6 +80,9 @@ class BPF_OP:
     BPF_LSH		= 0x60
     BPF_RSH		= 0x70
     BPF_NEG		= 0x80
+    BPF_MOD		= 0x90
+    BPF_XOR		= 0xa0
+
     BPF_JA		= 0x00
     BPF_JEQ		= 0x10
     BPF_JGT		= 0x20
@@ -242,6 +245,8 @@ class BpfProc(BpfProcessorBase):
         { 'name': 'lsh', 'feature': CF_USE1},
         { 'name': 'rsh', 'feature': CF_USE1},
         { 'name': 'neg', 'feature': CF_USE1},
+        { 'name': 'mod', 'feature': CF_USE1},
+        { 'name': 'xor', 'feature': CF_USE1},
         
         # MISC
         { 'name': 'tax', 'feature': 0 },
@@ -544,7 +549,10 @@ class BpfProc(BpfProcessorBase):
             BPF_OP.BPF_AND:'and',
             BPF_OP.BPF_LSH:'lsh',
             BPF_OP.BPF_RSH:'rsh',
-            BPF_OP.BPF_NEG:'neg'
+            BPF_OP.BPF_NEG:'neg',
+            BPF_OP.BPF_MOD:'mod',
+            BPF_OP.BPF_XOR:'xor'
+
         }[c._op]]
         if bi.code._src == BPF_RVAL.BPF_K:
             cmd[0].type = o_imm            
