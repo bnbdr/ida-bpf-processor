@@ -236,17 +236,17 @@ class BpfProc(BpfProcessorBase):
     instruc = instrs = [
 
         # ALU
-        { 'name': 'add', 'feature': CF_USE1},
-        { 'name': 'sub', 'feature': CF_USE1},
-        { 'name': 'mul', 'feature': CF_USE1},
-        { 'name': 'div', 'feature': CF_USE1},
-        { 'name': 'or', 'feature': CF_USE1},
-        { 'name': 'and', 'feature': CF_USE1},
-        { 'name': 'lsh', 'feature': CF_USE1},
-        { 'name': 'rsh', 'feature': CF_USE1},
+        { 'name': 'add', 'feature': CF_USE1 | CF_USE2 },
+        { 'name': 'sub', 'feature': CF_USE1 | CF_USE2},
+        { 'name': 'mul', 'feature': CF_USE1 | CF_USE2},
+        { 'name': 'div', 'feature': CF_USE1 | CF_USE2},
+        { 'name': 'or', 'feature': CF_USE1 | CF_USE2},
+        { 'name': 'and', 'feature': CF_USE1 | CF_USE2},
+        { 'name': 'lsh', 'feature': CF_USE1 | CF_USE2},
+        { 'name': 'rsh', 'feature': CF_USE1 | CF_USE2},
         { 'name': 'neg', 'feature': CF_USE1},
-        { 'name': 'mod', 'feature': CF_USE1},
-        { 'name': 'xor', 'feature': CF_USE1},
+        { 'name': 'mod', 'feature': CF_USE1 | CF_USE2},
+        { 'name': 'xor', 'feature': CF_USE1 | CF_USE2},
         
         # MISC
         { 'name': 'tax', 'feature': 0 },
@@ -554,16 +554,24 @@ class BpfProc(BpfProcessorBase):
             BPF_OP.BPF_XOR:'xor'
 
         }[c._op]]
-        if bi.code._src == BPF_RVAL.BPF_K:
-            cmd[0].type = o_imm            
-            cmd[0].dtyp = dt_dword
-            cmd[0].value = SIGNEXT(bi.k, 32)
-        
-        if bi.code._src == BPF_RVAL.BPF_X:
-            cmd[0].type = o_reg            
-            cmd[0].dtyp = dt_dword
-            cmd[0].reg = self.regNames.index('x')
+    
+        # assert bi.code._rval == BPF_RVAL.BPF_A
+        cmd[0].type = o_reg            
+        cmd[0].dtyp = dt_dword
+        cmd[0].reg = self.regNames.index('A')
 
+        if c._op != BPF_OP.BPF_NEG:
+            if bi.code._src == BPF_RVAL.BPF_X:
+                cmd[1].type = o_reg            
+                cmd[1].dtyp = dt_dword
+                cmd[1].reg = self.regNames.index('x')
+            elif bi.code._src == BPF_RVAL.BPF_K:
+                cmd[1].type = o_imm            
+                cmd[1].dtyp = dt_dword
+                cmd[1].value = bi.k
+            else:
+                assert False,  bi.code._rval
+            return 2
         return 1
 
     def _ana(self):
