@@ -1,4 +1,6 @@
-# IDA Python BPF Bytecode Processor & Loader
+# BPF Bytecode Processor for IDA (python)
+
+![](example.png)
 
 ## Processor
 Supports the old BPF bytecode only (no eBPF). 
