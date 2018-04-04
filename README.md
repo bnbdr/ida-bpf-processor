@@ -39,7 +39,7 @@ put the file loader `bpf_loader.py` in:
 ```
 
 ## License
-[MIT](https://opensource.org/licenses/MIT) 2017 [@bdr00](https://github.com/bdr00/)
+[MIT](https://opensource.org/licenses/MIT) 2017 [@bnbdr](https://github.com/bnbdr/)
 
 ## Relevant References
 - https://www.hex-rays.com/products/ida/support/idapython_docs/
