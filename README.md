@@ -38,6 +38,10 @@ put the file loader `bpf_loader.py` in:
 <IDA_INSTALL_DIR>\loaders\
 ```
 
+## Supported Versions
+- IDA 6.9
+
+
 ## License
 [MIT](https://opensource.org/licenses/MIT) 2017 [@bnbdr](https://github.com/bnbdr/)
 
