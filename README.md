@@ -39,11 +39,12 @@ put the file loader `bpf_loader.py` in:
 ```
 
 ## Supported Versions
-- IDA 6.9
+- IDA 7.x (tested on 7.0).
+- For older IDA versions use [this](https://github.com/bnbdr/ida-bpf-processor/releases/tag/v1.0.0).
 
 
 ## License
-[MIT](https://opensource.org/licenses/MIT) 2017 [@bnbdr](https://github.com/bnbdr/)
+[MIT](https://opensource.org/licenses/MIT) 2018 [@bnbdr](https://github.com/bnbdr/)
 
 ## Relevant References
 - https://www.hex-rays.com/products/ida/support/idapython_docs/

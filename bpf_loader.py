@@ -8,9 +8,9 @@ def read_whole_file(li, s=0):
 
 def accept_file(li, n):
     # we support only one format per file
-    if n > 0:
+      
+    if idaapi.IDA_SDK_VERSION < 700 and n > 0:
         return 0
-
 
     li.seek(0)
     if li.read(4) != 'bpf\0':
@@ -70,8 +70,7 @@ def load_file(li, neflags, format):
     if not buf:
         return 0
 
-    # Load all shellcode into different segments
-    start = 0x1000
+    start = 0x0
     seg = idaapi.segment_t()
     size = len(buf)
     end  = start + size
